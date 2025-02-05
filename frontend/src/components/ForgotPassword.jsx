@@ -1,17 +1,22 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+ const navigate= useNavigate()
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = async (e) => {
     try {
+      e.preventDefault();
       const res = await axios.post("http://localhost:5000/forgot-password", { email });
       setMessage(res.data.message);
+navigate('/reset-password')
     } catch (error) {
       setMessage("User not found");
     }
+    setEmail("");
   };
 
   return (

@@ -38,7 +38,17 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.token = "";
         state.name = "";
-      });
+      })
+      // .addCase(forgot.fulfilled, (state,action) => {
+      //   state.status ="otp-sent",
+      //   state.message = action.payload
+      // })
+      // .addCase(logout.fulfilled, (state) => {
+      //   state.isAuthenticated = false;
+      //   state.token = "";
+      //   state.name = "";
+      // })
+     
   },
 });
 

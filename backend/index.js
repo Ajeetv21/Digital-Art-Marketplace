@@ -19,8 +19,9 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  resetToken: { type: String },
-  resetTokenExpiry: { type: Date }
+  otp:String,
+  otpExpires:Date,
+
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -34,6 +35,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const generateOTP = () => crypto.randomInt(100000, 999999).toString();
+const isOTPExpired =(otpExpires)=> new Date() > new Date(otpExpires);
+
+
+const sendOTP = (email,otp) =>{
+  transporter.sendMail({
+    from:"ajeetv628@gmail.come",
+    to:email,
+    subject: "Password Reset OTP",
+    html:`<p>Your OTP for Password reset is <b>${otp}</b>. it expires in 10 minutes</p>`
+  })
+}
 // Signup Route
 app.post("/signup", async (req, res) => {
   try {
@@ -72,42 +85,45 @@ app.post("/login", async (req, res) => {
 
 // Forgot Password Route
 app.post("/forgot-password", async (req, res) => {
+  const {email} = req.body;
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
-    
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetToken = resetToken;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour expiration
-    await user.save();
-    
-    await transporter.sendMail({
-      to: email,
-      subject: "Password Reset Request",
-      text: `To reset your password, click on the following link: http://localhost:3000/reset-password/${resetToken}`
-    });
-    
-    res.json({ message: "Password reset email sent" });
+    const user = await User.findOne({email});
+    if(!user) return res.status(400).json({error:"User not found"})
+    const otp = generateOTP();
+   user.otp=otp;
+   user.otpExpires = new Date(Date.now() + 10 *60 *1000);
+   await user.save();
+
+   sendOTP(email,otp)
+   res.json({message:"OTP sent for password reset"})
+
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    
   }
 });
 
-// Middleware to Verify Token
-const verifyToken = (req, res, next) => {
-  const token = req.headers["authorization"];
-  if (!token) return res.status(403).json({ error: "Access denied" });
+app.post("/reset-password", async (req, res) => {
+  const {email,otp,newPassword} = req.body;
+  try {
+    const user = await User.findOne({email});
+    if(!user || user.otp!==otp ||isOTPExpired(user.otpExpires)){
+      res.json({error:"Invalid or expired Otp"})
+    }
+   user.password = await bcrypt.hash(newPassword,10);
   
-  jwt.verify(token, secretKey, (err, decoded) => {
-    if (err) return res.status(403).json({ error: "Invalid token" });
-    req.userId = decoded.id;
-    next();
-  });
-};
+   user.otp=null;
+   user.otpExpires = null;
+   await user.save();
+   res.json({message:"Password reset successfully"})
+
+  } catch (error) {
+    
+  }
+});
+
 
 // Protected Route (Dashboard)
-app.get("/dashboard", verifyToken, (req, res) => {
+app.get("/dashboard", (req, res) => {
   res.json({ message: "Welcome to the dashboard" });
 });
 
