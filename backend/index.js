@@ -5,14 +5,39 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
-
+const multer = require("multer");
 const app = express();
 app.use(express.json());
+const path = require("path");
+const fs = require("fs");
 app.use(cors());
+app.use("/uploads", express.static("uploads"));
 
 mongoose.connect("mongodb://localhost:27017/auth_db", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+});
+
+// Multer Setup for Local Storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = "uploads";
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+const upload = multer({ storage });
+
+const ArtSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  imageUrl: String,
+  price: Number,
+  artist: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const UserSchema = new mongoose.Schema({
@@ -25,7 +50,36 @@ const UserSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model("User", UserSchema);
+const Art = mongoose.model("Art", ArtSchema);
 const secretKey = "your_secret_key"; // Change this to a secure key
+
+
+// Authentication Middleware
+const protect = async (req, res, next) => {
+let token;
+let authHeader = req.headers.authorization|| req.headers.Authorization;
+if(authHeader && authHeader.startsWith("Bearer")){
+ token = authHeader.split(" ")[1];
+}
+if(!token){ 
+  res.status(401).json({ error: "Unauthorized: No token provided" });
+}
+
+
+  try {
+      // Verify token
+      const decoded = jwt.verify(token, secretKey); // Replace with your actual secret key
+      req.user = decoded; // Attach user data to request object
+      // console.log("decoded",decoded);
+      next(); // Continue to next middleware
+
+      
+  } catch (error) {
+      res.status(401).json({ error: "Unauthorized: Invalid token" });
+  }
+
+};
+
 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
@@ -130,6 +184,79 @@ app.get("/dashboard", (req, res) => {
 // Logout Route (Frontend should handle token removal)
 app.post("/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
+});
+
+
+
+// Art Routes
+
+app.post("/upload-art", protect, upload.single("image"), async (req, res) => {
+  try {
+      const { title, description, price } = req.body;
+
+     
+      const artist = req.user.id; // Use id from token
+
+      if (!req.file) return res.status(400).json({ error: "No image provided" });
+
+      const imageUrl = `/uploads/${req.file.filename}`;
+      const art = new Art({ title, description, price, imageUrl, artist });
+
+      await art.save();
+      res.status(201).json(art);
+  } catch (error) {
+      res.status(500).json({ error: "Server error" });
+  }
+});
+// Get All Artworks
+app.get("/arts", async (req, res) => {
+  const arts = await Art.find().populate("artist", "name email");
+  res.json(arts);
+});
+
+app.get("/arts/:id", async (req, res) => {
+  const art = await Art.findById(req.params.id).populate("artist", "name email");
+  if (!art) return res.status(404).json({ error: "Artwork not found" });
+  res.json(art);
+});
+
+app.delete("/arts/:id", protect, async (req, res) => {
+  const art = await Art.findById(req.params.id);
+  const imagePath = path.join("uploads", path.basename(art.imageUrl));
+  if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+
+  await art.deleteOne();
+  res.json({ message: "Artwork deleted" });
+
+});
+app.put("/arts/:id", protect, upload.single("image"), async (req, res) => {
+  try {
+    const { title, description, price } = req.body;
+    const art = await Art.findById(req.params.id);
+
+    if (!art) return res.status(404).json({ error: "Artwork not found" });
+
+    // Update fields if provided
+    art.title = title || art.title;
+    art.description = description || art.description;
+    art.price = price || art.price;
+
+    // If a new image is uploaded, replace the old one
+    if (req.file) {
+      // Delete old image from uploads folder
+      const oldImagePath = path.join("uploads", path.basename(art.imageUrl));
+      if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+
+      // Set new image URL
+      art.imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    await art.save();
+    res.json({ message: "Artwork updated successfully", art });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 app.listen(5000, () => {

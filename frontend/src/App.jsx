@@ -8,7 +8,9 @@ import Dashboard from "./components/Dashboard";
 import PrivateRoute from "./components/PrivateRoute";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
-
+import ArtUploadForm from "./components/ArtUploadForm";
+import ArtDetail from "./components/ArtDetail";
+import EditArt from "./components/EditArt";
 const App = () => {
   return (
     <Provider store={store}>
@@ -20,6 +22,11 @@ const App = () => {
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/forgot-password" element={<ForgotPassword/>} />
           <Route path="/reset-password" element={<ResetPassword/>} />
+          <Route path="/upload-art" element={<ArtUploadForm/>} />
+          <Route path="/art/:id" element={<ArtDetail/>} />
+          <Route path="/edit-art/:id" element={<EditArt />} />
+
+          
         </Routes>
       </Router>
     </Provider>
