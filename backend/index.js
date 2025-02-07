@@ -18,7 +18,7 @@ mongoose.connect("mongodb://localhost:27017/auth_db", {
   useUnifiedTopology: true,
 });
 
-// Multer Setup for Local Storage
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = "uploads";
@@ -51,7 +51,7 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", UserSchema);
 const Art = mongoose.model("Art", ArtSchema);
-const secretKey = "your_secret_key"; // Change this to a secure key
+const secretKey = "your_secret_key"; 
 
 
 // Authentication Middleware
@@ -68,10 +68,10 @@ if(!token){
 
   try {
       // Verify token
-      const decoded = jwt.verify(token, secretKey); // Replace with your actual secret key
-      req.user = decoded; // Attach user data to request object
-      // console.log("decoded",decoded);
-      next(); // Continue to next middleware
+      const decoded = jwt.verify(token, secretKey); 
+      req.user = decoded; 
+   
+      next();
 
       
   } catch (error) {

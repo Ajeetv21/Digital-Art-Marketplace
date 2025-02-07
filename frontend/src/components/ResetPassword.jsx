@@ -1,26 +1,26 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { resetPassword } from "../redux/authSlice"; // Import resetPassword action
 import { useNavigate } from "react-router-dom";
 
 const ResetPassword = () => {
   const [form, setForm] = useState({ email: "", otp: "", newPassword: "" });
-  const [message, setMessage] = useState("");
+  const dispatch = useDispatch();
+  const resetPasswordMessage = useSelector((state) => state.auth.resetPasswordMessage);
   const navigate = useNavigate();
 
   const handleResetPassword = async (e) => {
-    try {
-      e.preventDefault();
-      const res = await axios.post("http://localhost:5000/reset-password", form);
-      setMessage(res.data.message);
-      navigate("/login");
-    } catch (error) {
-      setMessage("Invalid OTP or expired OTP");
-    }
+    e.preventDefault();
+    dispatch(resetPassword(form)).then((result) => {
+      if (result.meta.requestStatus === "fulfilled") {
+        navigate("/login");
+      }
+    });
     setForm({ email: "", otp: "", newPassword: "" });
   };
 
   return (
-    <div>
+    <div className="auth-container">
       <h2>Reset Password</h2>
       <input
         type="email"
@@ -41,7 +41,7 @@ const ResetPassword = () => {
         onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
       />
       <button onClick={handleResetPassword}>Submit</button>
-      <p>{message}</p>
+      <p>{resetPasswordMessage}</p>
     </div>
   );
 };

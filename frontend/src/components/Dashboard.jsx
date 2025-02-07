@@ -61,7 +61,7 @@ const Dashboard = () => {
             <p><strong>Price:</strong> ${art.price}</p>
             <p><strong>Artist:</strong> {art.artist.name} ({art.artist.email})</p>
             <button onClick={() => handleDelete(art._id)}>Delete</button>
-            <Link to={`/edit-art/${art._id}`}><button>Edit</button></Link>  {/* Edit Button */}
+            <Link to={`/edit-art/${art._id}`}><button>Edit</button></Link>  
           </div>
         ))}
       </div>
