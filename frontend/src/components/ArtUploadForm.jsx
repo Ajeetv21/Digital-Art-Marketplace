@@ -47,10 +47,10 @@ const ArtUploadForm = () => {
     };
 
     return (
-        <div>
+        <div className="art-upload-container">
             <h2>Upload Your Artwork</h2>
-            {message && <p>{message}</p>}
-            <form onSubmit={handleSubmit} encType="multipart/form-data">
+            {message && <p className={`art-upload-message ${message.includes("Failed") ? "error" : "success"}`}>{message}</p>}
+            <form onSubmit={handleSubmit} className="art-upload-form" encType="multipart/form-data">
                 <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
                 <textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
                 <input type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required />

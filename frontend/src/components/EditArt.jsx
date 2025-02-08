@@ -1,70 +1,85 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchArtById, updateArt } from "../redux/artSlice";
 
 const EditArt = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [image, setImage] = useState(null);
-  const [message, setMessage] = useState("");
+  const dispatch = useDispatch();
+
+  const { selectedArt, loading, error } = useSelector((state) => state.art);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    price: "",
+    image: null,
+  });
 
   useEffect(() => {
-    fetchArtDetails();
-  }, []);
+    dispatch(fetchArtById(id));
+  }, [dispatch, id]);
 
-  const fetchArtDetails = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/arts/${id}`);
-      const { title, description, price } = response.data;
-      setTitle(title);
-      setDescription(description);
-      setPrice(price);
-    } catch (error) {
-      console.error("Error fetching artwork details:", error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("price", price);
-      if (image) formData.append("image", image);
-
-      await axios.put(`http://localhost:5000/arts/${id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+  useEffect(() => {
+    if (selectedArt) {
+      setFormData({
+        title: selectedArt.title || "",
+        description: selectedArt.description || "",
+        price: selectedArt.price || "",
+        image: null, // Reset image to avoid showing old preview
       });
-
-      setMessage("Artwork updated successfully!");
-      setTimeout(() => navigate("/dashboard"), 1000); // Redirect after 2 seconds
-    } catch (error) {
-      console.error("Error updating artwork:", error);
-      setMessage("Failed to update artwork.");
     }
+  }, [selectedArt]);
+
+  const handleChange = (e) => {
+    const { name, value, type, files } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "file" ? files[0] : value,
+    }));
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(updateArt({ id, updatedData: formData }));
+    navigate("/dashboard");
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    <div>
-      <h2>Edit Artwork</h2>
-      {message && <p>{message}</p>}
-      <form onSubmit={handleSubmit}>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" required />
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" required />
-        <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price" required />
-        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
-        <button type="submit">Update Artwork</button>
-      </form>
-    </div>
+    <div className="edit-art-container">
+    <h2>Edit Artwork</h2>
+    <form onSubmit={handleSubmit} className="edit-art-form">
+      <input
+        type="text"
+        name="title"
+        value={formData.title}
+        onChange={handleChange}
+        placeholder="Title"
+        required
+      />
+      <textarea
+        name="description"
+        value={formData.description}
+        onChange={handleChange}
+        placeholder="Description"
+        required
+      />
+      <input
+        type="number"
+        name="price"
+        value={formData.price}
+        onChange={handleChange}
+        placeholder="Price"
+        required
+      />
+      <input type="file" name="image" onChange={handleChange} />
+      <button type="submit">Update Artwork</button>
+    </form>
+  </div>
   );
 };
 

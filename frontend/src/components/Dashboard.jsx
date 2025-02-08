@@ -1,70 +1,78 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../redux/authSlice";
-import axios from "axios";
+import { fetchArts, deleteArt } from "../redux/artSlice";
+
 import { Link } from "react-router-dom";
+import Header from "./Header";
+
 
 const Dashboard = () => {
-  const [arts, setArts] = useState([]);
-  const [message, setMessage] = useState("");
+  const dispatch = useDispatch();
+  const { arts = [], loading, error } = useSelector((state) => state.art || {});
+  const name = useSelector((state) => state.auth.name || "");
 
   useEffect(() => {
-    fetchArts();
-  }, []);
+    dispatch(fetchArts());
+  }, [dispatch]);
 
-  const fetchArts = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/arts");
-      setArts(response.data);
-    } catch (error) {
-      console.error("Error fetching artworks:", error);
-    }
-  };
-
-  const dispatch = useDispatch();
-  const name = useSelector((state) => state.auth.name);
-
-  const handleDelete = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/arts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setArts(arts.filter((art) => art._id !== id));
-      setMessage("Artwork deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting artwork:", error);
-      setMessage("Failed to delete artwork.");
-    }
+  const handleDelete = (id) => {
+    dispatch(deleteArt(id));
   };
 
   return (
     <div className="dashboard-container">
-      <h2 className="dashboard-title">Dashboard</h2>
-      <p className="dashboard-welcome">
-        Welcome, <span className="username">{name}</span>!
-      </p>
-      <button className="logout-button" onClick={() => dispatch(logout())}>
-        Logout
-      </button>
+      
+      <Header/>
+     
 
-      <h2>Art Gallery</h2>
-      {message && <p>{message}</p>}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-        {arts.map((art) => (
-          <div key={art._id} style={{ border: "1px solid #ddd", padding: "10px" }}>
-            <Link to={`/art/${art._id}`}>
-              <img src={`http://localhost:5000${art.imageUrl}`} alt={art.title} style={{ width: "100%", cursor: "pointer" }} />
-            </Link>
-            <h3>{art.title}</h3>
-            <p>{art.description}</p>
-            <p><strong>Price:</strong> ${art.price}</p>
-            <p><strong>Artist:</strong> {art.artist.name} ({art.artist.email})</p>
-            <button onClick={() => handleDelete(art._id)}>Delete</button>
-            <Link to={`/edit-art/${art._id}`}><button>Edit</button></Link>  
-          </div>
-        ))}
-      </div>
+      {loading && <p className="loading">Loading artworks...</p>}
+      {error && <p className="error">{error}</p>}
+
+      <table className="art-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Artist</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {arts.length === 0 && !loading ? (
+            <tr>
+              <td colSpan="6">No artworks found.</td>
+            </tr>
+          ) : (
+            arts.map((art) => (
+              <tr key={art._id}>
+                <td>
+                  <Link to={`/art/${art._id}`}>
+                    <img
+                      src={`http://localhost:5000${art.imageUrl}`}
+                      alt={art.title}
+                      className="art-image"
+                    />
+                  </Link>
+                </td>
+                <td>{art.title}</td>
+                <td>{art.description}</td>
+                <td>${art.price}</td>
+                <td>{art.artist.name} ({art.artist.email})</td>
+                <td>
+                  <button className="delete-btn" onClick={() => handleDelete(art._id)}>
+                    Delete
+                  </button>
+                  <Link to={`/edit-art/${art._id}`}>
+                    <button className="edit-btn">Edit</button>
+                  </Link>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };

@@ -20,11 +20,11 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/forgot-password" element={<ForgotPassword/>} />
-          <Route path="/reset-password" element={<ResetPassword/>} />
-          <Route path="/upload-art" element={<ArtUploadForm/>} />
-          <Route path="/art/:id" element={<ArtDetail/>} />
-          <Route path="/edit-art/:id" element={<EditArt />} />
+          <Route path="/forgot-password" element={<PrivateRoute><ForgotPassword/></PrivateRoute>} />
+          <Route path="/reset-password" element={<PrivateRoute><ResetPassword/></PrivateRoute>} />
+          <Route path="/upload-art" element={<PrivateRoute><ArtUploadForm/></PrivateRoute>} />
+          <Route path="/art/:id" element={<PrivateRoute><ArtDetail/></PrivateRoute>} />
+          <Route path="/edit-art/:id" element={<PrivateRoute><EditArt/></PrivateRoute>} />
 
           
         </Routes>
