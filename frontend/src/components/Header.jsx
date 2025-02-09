@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 const Header = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token"); 
@@ -25,6 +25,9 @@ const name = useSelector((state) => state.auth.name || "");
             <>
               <li>
                 <Link to="/dashboard">Dashboard</Link>
+              </li>
+              <li>
+                <Link to="/upload-art">Create-Art</Link>
               </li>
               <li>
                 <button onClick={handleLogout} className="logout-btn">

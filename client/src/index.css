@@ -1,0 +1,105 @@
+.loader {
+    width: 20px;
+    aspect-ratio: 1;
+    animation: l13-0 2s linear infinite;
+  }
+  .loader::before,
+  .loader::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(at 30% 30%,#0000,#000a) red;
+    animation: l13-1 0.5s cubic-bezier(.5,-500,.5,500) infinite;
+  }
+  .loader::after {
+    animation-delay: -0.15s;
+  }
+  @keyframes l13-0 { 
+    100% { transform:rotate(360deg)} 
+  }
+  @keyframes l13-1 { 
+    100% { transform:translate(0.5px)} 
+  }
+
+  .gallery-container {
+   
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .art-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+
+}
+
+.art-card {
+    background: #fff;
+    border-radius: 12px;
+    width: 300px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: center;
+    overflow: hidden;
+    padding: 15px;
+   
+    color: white;
+
+}
+
+.art-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.art-card img {
+   width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1; 
+    object-fit: cover;
+    border-radius: 12px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.art-card:hover img {
+    transform: scale(1.05);
+}
+
+.art-card h3 {
+    margin: 15px 0 8px;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.artist {
+    font-style: italic;
+    color: #777;
+    font-size: 0.9rem;
+}
+
+.price {
+    font-weight: bold;
+    color: #ff5722;
+    font-size: 1.1rem;
+    margin: 8px 0;
+}
+
+.buy-btn {
+    background: #ff5722;
+    color: white;
+    padding: 12px 15px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+
+.buy-btn:hover {
+    background: #e64a19;
+}
